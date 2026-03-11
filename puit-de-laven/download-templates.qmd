@@ -1,0 +1,368 @@
+---
+title: "Download and format templates for OOM"
+author: "David M. Kaplan"
+format: html
+editor: visual
+---
+
+## Overview
+
+This script contains R code to download the base IGN Lidar, OSM and ESRI imagery files to use as templates for creating the orienteering map in OpenOrienteeringMapper. Use instructions below.
+
+### Steps to use this script
+
+1) First install [R](https://cran.r-project.org/) and [RStudio](https://posit.co/products/open-source/rstudio/)
+
+2) Next edit the `parameters` and `ign-filenames` chunks of the script to suit your area. Link to IGN Lidar terrain data can be identified [here](https://cartes.gouv.fr/telechargement/IGNF_MNT-LIDAR-HD)
+
+3) Open this file and RStudio and click `Render`
+
+4) The script will slowly install all necessary packages, download baseline data and create files to use as templates for OpenOrienteeringMapper
+
+## Setup
+
+### Parameters
+
+
+```{r}
+#| label: parameters
+# Directories for storing downloads
+odir = "templates"
+cdir = file.path(odir,"contours")
+hdir = file.path(odir,"hillshades")
+
+# For dividing Lidar height data
+height_breaks = c(-Inf,-1,0,1,2,5,100,Inf)
+
+# List of color names for height categories
+height_cols0 = c("subterranean"= "orange",
+                 "ground"="tan",
+                 "low"="yellow",
+                 "med"="lightgreen",
+                 "high"="darkgreen",
+                 "lofty"="white",
+                 "NA"="gray")
+
+# Convert to numerical RGB values
+height_cols = lapply(height_cols0,col2rgb)
+
+# bounding box of actual area we want to keep
+# These limits are so big, they cut nothing so map will have extent of IGN Lidar tiles
+bb = st_bbox(c(xmin=-10,xmax=10,
+               ymin=30,ymax=50),
+             crs=4326)
+```
+
+```{r}
+#| label: ign-filenames
+# From website: https://cartes.gouv.fr/telechargement/IGNF_MNT-LIDAR-HD
+mnt_fns = c(
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=756999.75,6276000.25,757999.75,6277000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0757_6277_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=756999.75,6275000.25,757999.75,6276000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0757_6276_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=755999.75,6275000.25,756999.75,6276000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0756_6276_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=755999.75,6276000.25,756999.75,6277000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0756_6277_MNT_O_0M50_LAMB93_IGN69.tif"
+)
+
+mnh_fns = gsub("MNT","MNH",mnt_fns)
+```
+
+### Install & load necessary packages
+
+The code below tries to load necessary packages. If they are absent, it tries to install them.
+
+```{r}
+#| label: setup
+# List of necessary packages
+pkgs.cran = c("tidyverse","sf","stars","basemaps","cols4all","foreach",
+              "OpenStreetMap","osmdata","hillshader")
+pkgs.github = c()
+
+# Check if CRAN packages installed
+# If not, install them
+for (pkg in c(pkgs.cran)) {
+  message("Attempting to load package: ",pkg)
+  
+  if (!require(pkg,character.only=TRUE)) {
+    message("Missing package ",pkg,"! Attempting install...")
+    install.packages(pkg,repos="https://cloud.r-project.org")
+  }
+  
+  library(pkg,character.only=TRUE)
+}
+
+# Github packages
+for (pkgg in pkgs.github) {
+  pkg = basename(pkgg)
+  message("Attempting to load package: ",pkg)
+  
+  if (!require(pkg,character.only=TRUE)) {
+    message("Missing package ",pkg,"! Attempting install from github...")
+    remotes::install_github(pkgg,upgrade=FALSE)
+  }
+
+  library(pkg,character.only=TRUE)
+}
+```
+
+```{r}
+#| label: helper-functions
+# Gets CRS of UTM system that best corresponds to data
+lonlat2UTM = function(lonlat) {
+  utm = (floor((lonlat[1] + 180) / 6) %% 60) + 1
+  if (lonlat[2] > 0) {
+    utm + 32600
+  } else{
+    utm + 32700
+  }
+}
+
+linear_rescale = function(m,new_min=0,new_max=255) {
+  mn = min(m)
+  mx = max(m)
+  
+  new_min + (m - mn) / (mx-mn) * (new_max - new_min)
+}
+
+quantile_cut = function(m,n,probs=seq(0,1,length.out=n+1)) {
+  q = quantile(m,probs=probs)
+  m = cut(m,breaks=unique(q),include.lowest=TRUE)
+  return(list(m=m,q=q))
+}
+```
+
+```{r}
+#| label: create-directories
+dir.create(odir,recursive = TRUE,showWarnings = FALSE)
+dir.create(cdir,recursive = TRUE,showWarnings = FALSE)
+dir.create(hdir,recursive = TRUE,showWarnings = FALSE)
+```
+
+## Download IGN Lidar products
+
+!!!DONE TO HERE!!!! !!!!NEED TO ADD CROP HERE!!!!
+
+```{r}
+#| label: download-terrain-files
+#| eval: !expr "!file.exists(file.path(odir,'mnt.RDS'))"
+
+fns = tempfile(as.character(1:length(mnt_fns)),fileext=".tif")
+
+for (n in seq_along(mnt_fns)) {
+  download.file(mnt_fns[n],destfile=fns[n])  
+}
+
+x = st_mosaic(fns)
+y = read_stars(x)
+
+saveRDS(y,file.path(odir,"mnt.RDS"))
+```
+
+```{r}
+#| label: download-height-files
+#| eval: !expr "!file.exists(file.path(odir,'mnh.RDS'))"
+
+fns = tempfile(as.character(1:length(mnt_fns)),fileext=".tif")
+
+for (n in seq_along(mnh_fns)) {
+  download.file(mnh_fns[n],destfile=fns[n])  
+}
+
+x = st_mosaic(fns)
+y = read_stars(x)
+
+saveRDS(y,file.path(odir,"mnh.RDS"))
+```
+
+## Download tiles
+
+```{r}
+#| label: utm-epsg-bbox
+y = readRDS(file.path(odir,"mnt.RDS"))
+
+# Bounding box with some added edge for tiles download
+b = st_bbox(y) + c(-200,-200,200,200) # Add some around edge
+bll = b |> st_transform(4326) # For downloading high res image
+
+# Find best UTM coordinate system for area
+bc = bll |> st_as_sfc() |> st_centroid()
+utm = bc |> st_coordinates() |> lonlat2UTM()
+```
+
+
+```{r}
+#| label: download-tiles
+#| eval: !expr "!file.exists(file.path(odir,'esri.high-res.tif'))"
+
+# OpenStreetMap
+o = basemap_stars(b,"osm","streets",1)
+o |> write_stars(file.path(odir,"osm.tif"),
+            options="COMPRESS=LZW",type="Byte")
+o |> st_warp(crs = utm) |>
+  write_stars(file.path(odir,"osm.utm.tif"),
+            options="COMPRESS=LZW",type="Byte")
+
+# ESRI satellite imagery
+es = basemap_stars(b,"esri","world_imagery",1)
+es |> write_stars(file.path(odir,"esri.tif"),
+            options="COMPRESS=LZW",type="Byte")
+es |> st_warp(crs=utm) |>
+  write_stars(file.path(odir,"esri.utm.tif"),
+            options="COMPRESS=LZW",type="Byte")
+
+# Higher res version of ESRI satellite imagery using OpenStreetMap package
+om = openmap(bll[4:3],bll[2:1],type="esri-imagery",zoom=18) |>
+  st_as_stars()
+om |> write_stars(file.path(odir,"esri.high-res.tif"),
+                  options="COMPRESS=LZW",type="Byte")
+om |> st_warp(crs=utm) |> 
+  write_stars(file.path(odir,"esri.high-res.utm.tif"),
+              options="COMPRESS=LZW",type="Byte")
+```
+
+```{r}
+#| label: osmdata
+#| eval: !expr "!file.exists(file.path(odir,'osm.osm'))"
+#| 
+# Get vector data from OSM
+x = opq(bll) 
+osmdata_xml(x, file.path(odir,"osm.osm"))
+```
+
+
+## Contours and hillshading
+
+```{r}
+#| label: contours-terrain
+y = readRDS(file.path(odir,"mnt.RDS"))
+
+# Downsample data to get somewhat smoother contour lines
+y4 = st_downsample(y,3,FUN=mean) 
+
+get_alt_breaks = function(x,step) {
+  r = range(x[[1]])
+  seq(floor(r[1]/step)*step,ceiling(r[2]/step)*step,by=step)
+}
+
+# Fine contours for potential visualization
+co2.5 = st_contour(y,breaks=get_alt_breaks(y,2.5),contour_lines = TRUE)
+
+# Smoother 25 m contours
+st25 = get_alt_breaks(y4,25)
+co25 = st_contour(y4,breaks=st25,contour_lines = TRUE)
+
+# Smoother 5 m contours without 25 m contours
+st5 = get_alt_breaks(y4,5)
+st5.no.25 = setdiff(st5,st25)
+
+co5.no.25 = st_contour(y4,breaks=st5.no.25,contour_lines = TRUE)
+
+# Write to shapefiles
+st_write(co2.5,file.path(odir,"contours","2.5m.shp"),delete_dsn=TRUE)
+st_write(co25,file.path(odir,"contours","25.0m.smooth.4.shp"),delete_dsn=TRUE)
+st_write(co5.no.25,file.path(odir,"contours","5.0m.no.25m.smooth.4.shp"),delete_dsn=TRUE)
+```
+
+
+```{r}
+#| label: hillshading
+#| eval: !expr "!file.exists(file.path(odir,'mnt.hillshade.tif'))"
+ 
+y = readRDS(file.path(odir,"mnt.RDS"))
+
+hs = hillshader(as(y,"Raster"),shader="ray_shade") |>
+  st_as_stars()
+hs[[1]] = round(hs[[1]]*255)
+write_stars(hs,file.path(odir,"mnt.hillshade.tif"),
+            options="COMPRESS=LZW",type="Byte")
+```
+
+## Analyze height data
+
+```{r}
+#| label: classify-heights
+#| eval: !expr "!file.exists(file.path(odir,'mnh.classified.tif'))"
+
+y = readRDS(file.path(odir,"mnh.RDS"))
+
+# First, cut into classes
+y2 = y
+y2[[1]] = cut(y2[[1]],breaks=height_breaks,
+              labels=names(height_cols))
+
+# Convert values to colors
+z2 = st_apply(y2,1:2,\(.) height_cols[[.]])
+# This has RGB band in first dimension spot, but this seems to
+# not affect saving to geotiff. This can be fixed by splitting first
+# dimension to attributes (split function) and then merging attributes
+# (merge function).
+
+# Write at geotiff
+write_stars(z2,file.path(odir,"mnh.classified.tif"),
+            options="COMPRESS=LZW",type="Byte")
+```
+
+```{r}
+#| label: quantile-classify-heights
+#| eval: !expr "!file.exists(file.path(odir,'mnh.quantile-classified.tif'))"
+
+y = readRDS(file.path(odir,"mnh.RDS"))
+
+n = 10
+p = c4a("brewer.paired",n=n)
+phex = col2rgb(p)
+
+yy = y
+qq = yy[[1]] |> quantile_cut(n=n)
+yy[[1]] = qq$m
+yy = yy |> st_apply(1:2,\(.) phex[,.])
+
+# Write at geotiff
+write_stars(yy,file.path(odir,"mnh.quantile-classified.tif"),
+            options="COMPRESS=LZW",type="Byte")
+```
+
+
+
+```{r}
+#| label: downsample-heights
+#| eval: !expr "!file.exists(file.path(odir,'mnh.downsample_hillshade.tif'))"
+
+y = readRDS(file.path(odir,"mnh.RDS"))
+
+# Down sample to 3 m scale
+ymn = st_downsample(y,5,FUN=mean) 
+ysd = st_downsample(y,5,FUN=sd)
+
+hs = hillshader(as(ymn,"Raster"),shader="ray_shade") |>
+  st_as_stars()
+hs[[1]] = round(hs[[1]]*255)
+write_stars(hs,file.path(odir,"mnh.downsample_hillshade.tif"),
+            options="COMPRESS=LZW",type="Byte")
+
+hs = hillshader(as(ysd,"Raster"),shader="ray_shade") |>
+  st_as_stars()
+hs[[1]] = round(hs[[1]]*255)
+write_stars(hs,file.path(odir,"mnh.downsample_sd_hillshade.tif"),
+            options="COMPRESS=LZW",type="Byte")
+
+```
+
+## Download North Arrow image
+
+```{r}
+#| label: download-north-arrow
+download.file("https://storage.needpix.com/thumbs/magnetic-33208_1280.png",
+              file.path(odir,"magnetic-33208_1280.png"))
+
+n = read_stars(file.path(odir,"magnetic-33208_1280.png"))
+n = n |> st_rgb()
+
+# Replace black by blue
+n[[1]][n[[1]][]=="#000000FF"] = "#00FFFFFF"
+
+n2 = st_apply(n,1:2,\(.) as.integer(col2rgb(.,alpha=TRUE)))
+
+write_stars(n2,file.path(odir,"magnetic-33208_1280.blue.tif"),
+            options="COMPRESS=LZW",type="Byte")
+```
+
