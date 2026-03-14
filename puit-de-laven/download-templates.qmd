@@ -17,12 +17,14 @@ This script contains R code to download the base IGN Lidar, OSM and ESRI imagery
 
 3) Open this file and RStudio and click `Render`
 
+    - The script will automatically try to install any necessary packages, but you can also install them by hand:
+    - `install.package(c("tidyverse", "sf", "stars", "basemaps", "cols4all", "foreach", "OpenStreetMap", "osmdata", "hillshader"))`
+
 4) The script will slowly install all necessary packages, download baseline data and create files to use as templates for OpenOrienteeringMapper
 
 ## Setup
 
 ### Parameters
-
 
 ```{r}
 #| label: parameters
@@ -35,27 +37,38 @@ hdir = file.path(odir,"hillshades")
 height_breaks = c(-Inf,-1,0,1,2,5,100,Inf)
 
 # List of color names for height categories
-height_cols0 = c("subterranean"= "orange",
-                 "ground"="tan",
-                 "low"="yellow",
-                 "med"="lightgreen",
-                 "high"="darkgreen",
-                 "lofty"="white",
-                 "NA"="gray")
+height_cols0 = c("subterranean"= "orange", # (-Inf,-1]
+                 "ground"="tan", # (-1, 0]
+                 "low"="yellow", # (0, 1]
+                 "med"="lightgreen", # (1, 2]
+                 "high"="darkgreen", # (2, 5]
+                 "lofty"="white", # (5, 100]
+                 "NA"="gray") # (100, Inf)
 
 # Convert to numerical RGB values
 height_cols = lapply(height_cols0,col2rgb)
 
 # bounding box of actual area we want to keep
 # These limits are so big, they cut nothing so map will have extent of IGN Lidar tiles
-bb = st_bbox(c(xmin=-10,xmax=10,
-               ymin=30,ymax=50),
-             crs=4326)
+bb = c(xmin=-10,xmax=10,ymin=30,ymax=50)
+
+# Zoom level when downloading high-resolution ESRI imagery
+esri_high_res_zoom = 18
+
+# For downsampling data for making contours and analyzing height
+# Used in st_downsample
+downsample_contours = 3 # 3 aggregates as 4x4 scale = 2m x 2m for IGN data
+downsample_height = 5 # 5 aggregates as 6x6 scale = 3m x 3m for IGN data
+
+# Height intervals for contours (in meters)
+contour_maj_interval = 25
+contour_min_interval = 5
 ```
 
 ```{r}
 #| label: ign-filenames
 # From website: https://cartes.gouv.fr/telechargement/IGNF_MNT-LIDAR-HD
+# Terrain filenames
 mnt_fns = c(
   "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=756999.75,6276000.25,757999.75,6277000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0757_6277_MNT_O_0M50_LAMB93_IGN69.tif",
   "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=756999.75,6275000.25,757999.75,6276000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0757_6276_MNT_O_0M50_LAMB93_IGN69.tif",
@@ -63,6 +76,7 @@ mnt_fns = c(
   "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=755999.75,6276000.25,756999.75,6277000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0756_6277_MNT_O_0M50_LAMB93_IGN69.tif"
 )
 
+# Height filenames same as terrain filenames, but with `mnh` instead of `mnt`
 mnh_fns = gsub("MNT","MNH",mnt_fns)
 ```
 
@@ -105,6 +119,10 @@ for (pkgg in pkgs.github) {
 ```
 
 ```{r}
+bb = st_bbox(bb,crs=4326)
+```
+
+```{r}
 #| label: helper-functions
 # Gets CRS of UTM system that best corresponds to data
 lonlat2UTM = function(lonlat) {
@@ -139,8 +157,6 @@ dir.create(hdir,recursive = TRUE,showWarnings = FALSE)
 
 ## Download IGN Lidar products
 
-!!!DONE TO HERE!!!! !!!!NEED TO ADD CROP HERE!!!!
-
 ```{r}
 #| label: download-terrain-files
 #| eval: !expr "!file.exists(file.path(odir,'mnt.RDS'))"
@@ -153,6 +169,8 @@ for (n in seq_along(mnt_fns)) {
 
 x = st_mosaic(fns)
 y = read_stars(x)
+bbmnt = st_transform(bb,st_crs(y))
+y = st_crop(y,bbmnt)
 
 saveRDS(y,file.path(odir,"mnt.RDS"))
 ```
@@ -169,6 +187,8 @@ for (n in seq_along(mnh_fns)) {
 
 x = st_mosaic(fns)
 y = read_stars(x)
+bbmnt = st_transform(bb,st_crs(y))
+y = st_crop(y,bbmnt)
 
 saveRDS(y,file.path(odir,"mnh.RDS"))
 ```
@@ -176,7 +196,7 @@ saveRDS(y,file.path(odir,"mnh.RDS"))
 ## Download tiles
 
 ```{r}
-#| label: utm-epsg-bbox
+#| label: utm-crs
 y = readRDS(file.path(odir,"mnt.RDS"))
 
 # Bounding box with some added edge for tiles download
@@ -190,33 +210,25 @@ utm = bc |> st_coordinates() |> lonlat2UTM()
 
 
 ```{r}
-#| label: download-tiles
+#| label: download-opentopomap-esri-imagery-tiles
 #| eval: !expr "!file.exists(file.path(odir,'esri.high-res.tif'))"
 
 # OpenStreetMap
 o = basemap_stars(b,"osm","streets",1)
 o |> write_stars(file.path(odir,"osm.tif"),
             options="COMPRESS=LZW",type="Byte")
-o |> st_warp(crs = utm) |>
-  write_stars(file.path(odir,"osm.utm.tif"),
-            options="COMPRESS=LZW",type="Byte")
 
 # ESRI satellite imagery
 es = basemap_stars(b,"esri","world_imagery",1)
 es |> write_stars(file.path(odir,"esri.tif"),
             options="COMPRESS=LZW",type="Byte")
-es |> st_warp(crs=utm) |>
-  write_stars(file.path(odir,"esri.utm.tif"),
-            options="COMPRESS=LZW",type="Byte")
 
 # Higher res version of ESRI satellite imagery using OpenStreetMap package
-om = openmap(bll[4:3],bll[2:1],type="esri-imagery",zoom=18) |>
+om = openmap(bll[4:3],bll[2:1],type="esri-imagery",
+             zoom = esri_high_res_zoom) |>
   st_as_stars()
 om |> write_stars(file.path(odir,"esri.high-res.tif"),
                   options="COMPRESS=LZW",type="Byte")
-om |> st_warp(crs=utm) |> 
-  write_stars(file.path(odir,"esri.high-res.utm.tif"),
-              options="COMPRESS=LZW",type="Byte")
 ```
 
 ```{r}
@@ -224,8 +236,8 @@ om |> st_warp(crs=utm) |>
 #| eval: !expr "!file.exists(file.path(odir,'osm.osm'))"
 #| 
 # Get vector data from OSM
-x = opq(bll) 
-osmdata_xml(x, file.path(odir,"osm.osm"))
+x = osmdata::opq(bll)
+osmdata::osmdata_xml(x, file.path(odir,"osm.osm"))
 ```
 
 
@@ -236,7 +248,7 @@ osmdata_xml(x, file.path(odir,"osm.osm"))
 y = readRDS(file.path(odir,"mnt.RDS"))
 
 # Downsample data to get somewhat smoother contour lines
-y4 = st_downsample(y,3,FUN=mean) 
+y4 = st_downsample(y,n=downsample_contours,FUN=mean) 
 
 get_alt_breaks = function(x,step) {
   r = range(x[[1]])
@@ -246,20 +258,20 @@ get_alt_breaks = function(x,step) {
 # Fine contours for potential visualization
 co2.5 = st_contour(y,breaks=get_alt_breaks(y,2.5),contour_lines = TRUE)
 
-# Smoother 25 m contours
-st25 = get_alt_breaks(y4,25)
+# Smoother major contours
+st25 = get_alt_breaks(y4,contour_maj_interval)
 co25 = st_contour(y4,breaks=st25,contour_lines = TRUE)
 
 # Smoother 5 m contours without 25 m contours
-st5 = get_alt_breaks(y4,5)
+st5 = get_alt_breaks(y4,contour_min_interval)
 st5.no.25 = setdiff(st5,st25)
 
 co5.no.25 = st_contour(y4,breaks=st5.no.25,contour_lines = TRUE)
 
 # Write to shapefiles
-st_write(co2.5,file.path(odir,"contours","2.5m.shp"),delete_dsn=TRUE)
-st_write(co25,file.path(odir,"contours","25.0m.smooth.4.shp"),delete_dsn=TRUE)
-st_write(co5.no.25,file.path(odir,"contours","5.0m.no.25m.smooth.4.shp"),delete_dsn=TRUE)
+st_write(co2.5,file.path(cdir,"2.5m.shp"),delete_dsn=TRUE)
+st_write(co25,file.path(cdir,"major.smooth.shp"),delete_dsn=TRUE)
+st_write(co5.no.25,file.path(cdir,"minor.smooth.shp"),delete_dsn=TRUE)
 ```
 
 
@@ -316,12 +328,14 @@ qq = yy[[1]] |> quantile_cut(n=n)
 yy[[1]] = qq$m
 yy = yy |> st_apply(1:2,\(.) phex[,.])
 
+# Print out height quantile breaks
+print(qq$q)
+
 # Write at geotiff
 write_stars(yy,file.path(odir,"mnh.quantile-classified.tif"),
             options="COMPRESS=LZW",type="Byte")
+write.csv(qq$q,file.path(odir,"mnh.quantile-classified.breaks.csv"))
 ```
-
-
 
 ```{r}
 #| label: downsample-heights
@@ -330,8 +344,8 @@ write_stars(yy,file.path(odir,"mnh.quantile-classified.tif"),
 y = readRDS(file.path(odir,"mnh.RDS"))
 
 # Down sample to 3 m scale
-ymn = st_downsample(y,5,FUN=mean) 
-ysd = st_downsample(y,5,FUN=sd)
+ymn = st_downsample(y,downsample_height,FUN=mean) 
+ysd = st_downsample(y,downsample_height,FUN=sd)
 
 hs = hillshader(as(ymn,"Raster"),shader="ray_shade") |>
   st_as_stars()
@@ -348,6 +362,8 @@ write_stars(hs,file.path(odir,"mnh.downsample_sd_hillshade.tif"),
 ```
 
 ## Download North Arrow image
+
+This code downloads a decent magnetic north arrow image and converts it to mostly blue. Not great, but suitable.
 
 ```{r}
 #| label: download-north-arrow

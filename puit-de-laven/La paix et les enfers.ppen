@@ -1,0 +1,325 @@
+﻿<course-scribe-event>
+  <event id="1">
+    <title>La paix et les enfers</title>
+    <map kind="OCAD" scale="10000" ignore-missing-fonts="false" absolute-path="puit-de-laven.omap">puit-de-laven.omap</map>
+    <standards map="2017" description="2018" />
+    <all-controls print-scale="10000" description-kind="symbols" />
+    <print-area automatic="false" restrict-to-page-size="true" left="-175.553558" top="42.27495" right="21.8044434" bottom="-241.951065" page-width="827" page-height="1169" page-margins="25" page-landscape="false" />
+    <numbering start="31" disallow-invertible="true" />
+    <punch-card rows="3" columns="8" left-to-right="true" top-to-bottom="false" />
+    <course-appearance scale-sizes="RelativeTo15000" scale-sizes-circle-gaps="true" number-font="Roboto" auto-leg-gap-size="3.5" blend-purple="true" blend-style="layer" lower-purple-layer="9" />
+    <descriptions lang="en" color="black" />
+    <ocad overprint-colors="false" />
+  </event>
+  <control id="1" kind="normal">
+    <code>31</code>
+    <location x="-138.879379" y="-17.6385822" />
+    <description box="D" iof-2004-ref="2.3" />
+  </control>
+  <control id="4" kind="normal">
+    <code>34</code>
+    <location x="-32.4248466" y="-19.9472618" />
+    <description box="D" iof-2004-ref="5.13" />
+  </control>
+  <control id="6" kind="normal">
+    <code>36</code>
+    <location x="-50.2528458" y="-47.39466" />
+    <description box="D" iof-2004-ref="2.3" />
+  </control>
+  <control id="7" kind="normal">
+    <code>37</code>
+    <location x="-49.67569" y="-73.30293" />
+    <description box="D" iof-2004-ref="2.3" />
+  </control>
+  <control id="8" kind="normal">
+    <code>38</code>
+    <location x="-34.0922546" y="-67.21064" />
+    <description box="D" iof-2004-ref="2.3" />
+  </control>
+  <control id="9" kind="normal">
+    <code>39</code>
+    <location x="-24.66524" y="-64.19656" />
+    <description box="D" iof-2004-ref="2.3" />
+    <description box="G" iof-2004-ref="11.1SE" />
+  </control>
+  <control id="10" kind="normal">
+    <code>40</code>
+    <location x="-10.8774786" y="-89.5277557" />
+    <description box="D" iof-2004-ref="5.13" />
+    <description box="G" iof-2004-ref="11.3E" />
+  </control>
+  <control id="41" kind="normal">
+    <code>32</code>
+    <location x="-50.2476158" y="-20.2888" />
+    <description box="D" iof-2004-ref="5.13" />
+  </control>
+  <control id="13" kind="normal">
+    <code>43</code>
+    <location x="-47.77028" y="15.3418493" />
+    <description box="D" iof-2004-ref="1.9" />
+    <description box="E" iof-2004-ref="1.10" />
+  </control>
+  <control id="14" kind="normal">
+    <code>44</code>
+    <location x="-101.899254" y="17.2777042" />
+    <description box="D" iof-2004-ref="5.8" />
+    <description box="F" iof-2004-ref="11.7" />
+  </control>
+  <control id="15" kind="normal">
+    <code>45</code>
+    <location x="-62.5304451" y="0.703526437" />
+    <description box="D" iof-2004-ref="5.8" />
+    <description box="G" iof-2004-ref="11.5NE" />
+  </control>
+  <control id="16" kind="normal">
+    <code>46</code>
+    <location x="-98.8277" y="-17.1016579" />
+    <description box="D" iof-2004-ref="1.3" />
+    <description box="E" iof-2004-ref="2.1" />
+    <description box="G" iof-2004-ref="11.15" />
+  </control>
+  <control id="17" kind="normal">
+    <code>47</code>
+    <location x="-134.282684" y="-56.9560852" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="18" kind="normal">
+    <code>48</code>
+    <location x="-135.780975" y="-68.6801" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="3.3" />
+  </control>
+  <control id="19" kind="normal">
+    <code>49</code>
+    <location x="-89.74312" y="-54.25905" />
+    <description box="D" iof-2004-ref="2.3" />
+  </control>
+  <control id="20" kind="normal">
+    <code>50</code>
+    <location x="-102.078346" y="-79.80315" />
+    <description box="D" iof-2004-ref="1.12" />
+    <description box="E" iof-2004-ref="3.2" />
+    <description box="G" iof-2004-ref="11.3W" />
+  </control>
+  <control id="21" kind="normal">
+    <code>51</code>
+    <location x="-79.2585754" y="-122.513824" />
+    <description box="D" iof-2004-ref="4.9" />
+    <description box="G" iof-2004-ref="11.1E" />
+  </control>
+  <control id="22" kind="normal">
+    <code>52</code>
+    <location x="-53.5319443" y="-162.04007" />
+    <description box="C" iof-2004-ref="0.3" />
+    <description box="D" iof-2004-ref="2.1" />
+    <description box="E" iof-2004-ref="3.4" />
+  </control>
+  <control id="23" kind="normal">
+    <code>53</code>
+    <location x="-25.8014755" y="-140.388977" />
+    <description box="D" iof-2004-ref="1.12" />
+    <description box="E" iof-2004-ref="3.2" />
+  </control>
+  <control id="24" kind="normal">
+    <code>54</code>
+    <location x="4.08395" y="-129.48114" />
+    <description box="D" iof-2004-ref="5.8" />
+    <description box="E" iof-2004-ref="5.13" />
+    <description box="G" iof-2004-ref="11.8NE" />
+  </control>
+  <control id="25" kind="normal">
+    <code>55</code>
+    <location x="-22.04947" y="-91.1218262" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="26" kind="normal">
+    <code>56</code>
+    <location x="-13.3920078" y="-93.2381" />
+    <description box="D" iof-2004-ref="5.8" />
+    <description box="E" iof-2004-ref="5.13" />
+    <description box="F" iof-2004-ref="11.7" />
+  </control>
+  <control id="46" kind="normal">
+    <code>57</code>
+    <location x="-67.98665" y="-6.52640343" />
+  </control>
+  <control id="28" kind="normal">
+    <code>58</code>
+    <location x="-55.5833549" y="-108.04187" />
+    <description box="D" iof-2004-ref="1.10" />
+    <description box="E" iof-2004-ref="2.1" />
+    <description box="G" iof-2004-ref="11.11" />
+  </control>
+  <control id="29" kind="normal">
+    <code>59</code>
+    <location x="-129.111542" y="-129.128342" />
+    <description box="D" iof-2004-ref="4.7" />
+    <description box="E" iof-2004-ref="4.8" />
+    <description box="G" iof-2004-ref="11.1S" />
+  </control>
+  <control id="30" kind="normal">
+    <code>60</code>
+    <location x="-28.9285145" y="-106.2617" />
+    <description box="D" iof-2004-ref="5.8" />
+    <description box="E" iof-2004-ref="5.13" />
+    <description box="G" iof-2004-ref="11.8SW" />
+  </control>
+  <control id="31" kind="normal">
+    <code>62</code>
+    <location x="-32.0071831" y="-126.318451" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="32" kind="normal">
+    <code>63</code>
+    <location x="-64.24342" y="-87.36991" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="33" kind="normal">
+    <code>64</code>
+    <location x="-112.862762" y="-91.81819" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="34" kind="normal">
+    <code>65</code>
+    <location x="-97.2076645" y="-116.03347" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="35" kind="normal">
+    <code>67</code>
+    <location x="-94.32779" y="-154.477463" />
+    <description box="D" iof-2004-ref="4.9" />
+    <description box="G" iof-2004-ref="11.1S" />
+  </control>
+  <control id="36" kind="normal">
+    <code>69</code>
+    <location x="-14.2287941" y="-50.44121" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.1" />
+  </control>
+  <control id="37" kind="normal">
+    <code>70</code>
+    <location x="-20.8086739" y="-24.67931" />
+    <description box="D" iof-2004-ref="2.3" />
+  </control>
+  <control id="38" kind="normal">
+    <code>71</code>
+    <location x="-42.7787857" y="-70.73848" />
+    <description box="D" iof-2004-ref="6.2" />
+    <description box="E" iof-2004-ref="5.13" />
+  </control>
+  <control id="39" kind="start">
+    <location x="-17.498003" y="-24.8540745" />
+    <description box="D" iof-2004-ref="5.2" />
+    <description box="E" iof-2004-ref="5.2" />
+    <description box="F" iof-2004-ref="10.2" />
+  </control>
+  <control id="40" kind="finish">
+    <location x="-17.4882851" y="-24.7898312" />
+    <description box="all" iof-2004-ref="14.3" />
+  </control>
+  <control id="42" kind="normal">
+    <code>33</code>
+    <location x="-102.769814" y="-8.679873" />
+    <description box="D" iof-2004-ref="2.4" />
+    <description box="E" iof-2004-ref="3.5" />
+  </control>
+  <control id="43" kind="normal">
+    <code>41</code>
+    <location x="-118.041611" y="-143.622009" />
+    <description box="D" iof-2004-ref="4.9" />
+  </control>
+  <control id="44" kind="normal">
+    <code>42</code>
+    <location x="-108.324837" y="-155.33197" />
+    <description box="D" iof-2004-ref="4.9" />
+    <description box="E" iof-2004-ref="5.1" />
+  </control>
+  <control id="45" kind="normal">
+    <code>72</code>
+    <location x="-83.73763" y="-91.87942" />
+    <description box="D" iof-2004-ref="4.8" />
+    <description box="G" iof-2004-ref="11.1S" />
+  </control>
+  <course id="2" kind="normal" order="1">
+    <name>La paix et les enfers</name>
+    <labels label-kind="sequence" />
+    <first course-control="5" />
+    <print-area automatic="false" restrict-to-page-size="true" left="-175.553558" top="42.27495" right="21.8044434" bottom="-241.951065" page-width="827" page-height="1169" page-margins="25" page-landscape="false" />
+    <options print-scale="10000" hide-from-reports="false" description-kind="symbols" />
+  </course>
+  <course-control id="13" control="17">
+    <next course-control="29" />
+  </course-control>
+  <course-control id="9" control="41">
+    <next course-control="25" />
+  </course-control>
+  <course-control id="5" control="39">
+    <next course-control="32" />
+  </course-control>
+  <course-control id="6" control="40" />
+  <course-control id="32" control="4">
+    <next course-control="9" />
+  </course-control>
+  <course-control id="25" control="42">
+    <next course-control="13" />
+  </course-control>
+  <course-control id="29" control="43">
+    <next course-control="15" />
+  </course-control>
+  <course-control id="15" control="35">
+    <next course-control="17" />
+  </course-control>
+  <course-control id="17" control="15">
+    <next course-control="18" />
+  </course-control>
+  <course-control id="18" control="36">
+    <next course-control="19" />
+  </course-control>
+  <course-control id="19" control="10">
+    <next course-control="20" />
+  </course-control>
+  <course-control id="20" control="23">
+    <next course-control="31" />
+  </course-control>
+  <course-control id="31" control="45">
+    <next course-control="28" />
+  </course-control>
+  <course-control id="30" control="44">
+    <next course-control="26" />
+  </course-control>
+  <course-control id="26" control="24">
+    <next course-control="6" />
+  </course-control>
+  <course-control id="28" control="29">
+    <next course-control="30" />
+  </course-control>
+  <special-object id="3" kind="descriptions">
+    <appearance columns="3" />
+    <location x="-116.500587" y="-176.730682" />
+    <location x="-111.226028" y="-176.730682" />
+    <courses>
+      <course course="2" />
+    </courses>
+  </special-object>
+  <special-object id="5" kind="text">
+    <text>Ne pas tenter en période de tempête. Risque d'inondation.</text>
+    <font name="Roboto" bold="true" italic="false" />
+    <appearance color="purple" />
+    <location x="-115.040169" y="-212.491287" />
+    <location x="17.1810532" y="-223.8488" />
+    <courses all="true" />
+  </special-object>
+</course-scribe-event>
