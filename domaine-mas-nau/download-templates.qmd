@@ -53,7 +53,8 @@ height_cols = lapply(height_cols0,col2rgb)
 
 # bounding box of actual area we want to keep
 # These limits are so big, they cut nothing so map will have extent of IGN Lidar tiles
-bb = c(xmin=-10,xmax=10,ymin=30,ymax=50)
+bb = c(xmin=3.8554303157458207,xmax=3.8729183178733972,
+       ymin=43.84020854324748,ymax=43.84547044626268)
 
 # Zoom level when downloading high-resolution ESRI imagery
 esri_high_res_zoom = 18
@@ -73,10 +74,11 @@ contour_min_interval = 5
 # From website: https://cartes.gouv.fr/telechargement/IGNF_MNT-LIDAR-HD
 # Terrain filenames
 mnt_fns = c(
-  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=756999.75,6276000.25,757999.75,6277000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0757_6277_MNT_O_0M50_LAMB93_IGN69.tif",
-  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=756999.75,6275000.25,757999.75,6276000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0757_6276_MNT_O_0M50_LAMB93_IGN69.tif",
-  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=755999.75,6275000.25,756999.75,6276000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0756_6276_MNT_O_0M50_LAMB93_IGN69.tif",
-  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=755999.75,6276000.25,756999.75,6277000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0756_6277_MNT_O_0M50_LAMB93_IGN69.tif"
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=767999.75,6305000.25,768999.75,6306000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0768_6306_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=768999.75,6305000.25,769999.75,6306000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0769_6306_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=769999.75,6305000.25,770999.75,6306000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0770_6306_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=768999.75,6304000.25,769999.75,6305000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0769_6305_MNT_O_0M50_LAMB93_IGN69.tif",
+  "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&EXCEPTIONS=text/xml&REQUEST=GetMap&LAYERS=IGNF_LIDAR-HD_MNT_ELEVATION.ELEVATIONGRIDCOVERAGE.LAMB93&FORMAT=image/geotiff&STYLES=&CRS=EPSG:2154&BBOX=769999.75,6304000.25,770999.75,6305000.25&WIDTH=2000&HEIGHT=2000&FILENAME=LHD_FXX_0770_6305_MNT_O_0M50_LAMB93_IGN69.tif"
 )
 
 # Height filenames same as terrain filenames, but with `mnh` instead of `mnt`
@@ -240,7 +242,10 @@ om |> write_stars(file.path(odir,"esri.high-res.tif"),
 #| eval: !expr "!file.exists(file.path(odir,'osm.osm'))"
 #| 
 # Get vector data from OSM
+
+# NOTE: This line sometimes fails for mysterious reasons. If so, rerun.
 x = osmdata::opq(bll)
+
 osmdata::osmdata_xml(x, file.path(odir,"osm.osm"))
 ```
 
@@ -260,7 +265,11 @@ get_alt_breaks = function(x,step,na.rm=TRUE) {
 }
 
 # Fine contours for potential visualization
-co2.5 = st_contour(y,breaks=get_alt_breaks(y,2.5),contour_lines = TRUE)
+# For some reason 2.5m contour fails if y is not downsampled...
+# This seems to be a bug related to NAs, but I haven't investigated...
+y1 = st_downsample(y,n=1,FUN=mean)
+co2.5 = st_contour(y1,breaks=get_alt_breaks(y,2.5),
+                   na.rm=TRUE,contour_lines = TRUE)
 
 # Smoother major contours
 st25 = get_alt_breaks(y4,contour_maj_interval)
