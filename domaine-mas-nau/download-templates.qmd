@@ -2,14 +2,21 @@
 title: "Download and format templates for OOM"
 author: "David M. Kaplan"
 format: html
-editor: visual
 ---
 
-## Overview
+## Overview / Sommaire
+
+## English
 
 This script contains R code to download the base IGN Lidar, OSM and ESRI imagery files to use as templates for creating the orienteering map in OpenOrienteeringMapper. Use instructions below.
 
-### Steps to use this script
+## Français
+
+Ce script contient du code R permettant de télécharger les fichiers d'imagerie Lidar IGN, OSM et ESRI de base, qui serviront de modèles pour la création de la carte d'orientation dans OpenOrienteeringMapper. Suivez les instructions ci-dessous.
+
+### Steps to use this script / Utilisation du script
+
+#### English
 
 1) First install [R](https://cran.r-project.org/) and [RStudio](https://posit.co/products/open-source/rstudio/)
 
@@ -21,6 +28,20 @@ This script contains R code to download the base IGN Lidar, OSM and ESRI imagery
     - `install.package(c("tidyverse", "sf", "stars", "basemaps", "cols4all", "foreach", "OpenStreetMap", "osmdata", "hillshader"))`
 
 4) The script will slowly install all necessary packages, download baseline data and create files to use as templates for OpenOrienteeringMapper
+
+#### Français
+
+1) Installez d'abord [R](https://cran.r-project.org/) et [RStudio](https://posit.co/products/open-source/rstudio/).
+
+2) Modifiez ensuite les sections `parameters` et `ign-filenames` du script en fonction de votre zone géographique. Les liens vers les données de terrain Lidar de l'IGN sont disponibles [ici](https://cartes.gouv.fr/telechargement/IGNF_MNT-LIDAR-HD).
+
+3) Ouvrez ce fichier dans RStudio et cliquez sur `Rendre` (ou `Render`).
+
+- Le script tentera d'installer automatiquement les packages nécessaires, mais vous pouvez également les installer manuellement :
+
+- `install.package(c("tidyverse", "sf", "stars", "basemaps", "cols4all", "foreach", "OpenStreetMap", "osmdata", "hillshader"))`
+
+4) Le script installera progressivement tous les packages nécessaires, téléchargera les données de base et créera des fichiers servant de modèles pour OpenOrienteeringMapper.
 
 ## Setup
 
