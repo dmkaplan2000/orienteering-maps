@@ -197,7 +197,9 @@ for (n in seq_along(mnt_fns)) {
 x = st_mosaic(fns)
 y = read_stars(x)
 bbmnt = st_transform(bb,st_crs(y))
-y = st_crop(y,bbmnt)
+y = st_crop(y,bbmnt) |> st_normalize()
+# st_normalize need or functions like st_downsample and 
+# st_contour behave badly
 
 saveRDS(y,file.path(odir,"mnt.RDS"))
 ```
@@ -215,7 +217,9 @@ for (n in seq_along(mnh_fns)) {
 x = st_mosaic(fns)
 y = read_stars(x)
 bbmnt = st_transform(bb,st_crs(y))
-y = st_crop(y,bbmnt)
+y = st_crop(y,bbmnt) |> st_normalize()
+# st_normalize need or functions like st_downsample and 
+# st_contour behave badly
 
 saveRDS(y,file.path(odir,"mnh.RDS"))
 ```
@@ -270,6 +274,31 @@ x = osmdata::opq(bll)
 osmdata::osmdata_xml(x, file.path(odir,"osm.osm"))
 ```
 
+```{r}
+#| label: osmdata-clip
+#| eval: false
+# eval: !expr "!file.exists(file.path(odir,'osm-clip.osm'))"
+# 
+
+# Clip OSM data to desired area
+
+# This fails as the GDAL driver for OSM is read only
+# Currently don't see a good way to pre-trim XML data, but in
+# OOM we can pan till we get to the intended area and then crop the data.
+
+fn = file.path(odir,'osm-clip.osm')
+file.copy(file.path(odir,'osm.osm'),fn)
+
+lys = st_layers(fn)
+
+for (ln in lys$name) {
+  x = st_read(fn,layer=ln)
+  x = st_crop(x,bll)
+  
+  st_write(x,fn,layer=ln,delete_layer=TRUE) # Fails, but could write out to a shapefil
+}
+```
+
 
 ## Contours and hillshading
 
@@ -286,10 +315,7 @@ get_alt_breaks = function(x,step,na.rm=TRUE) {
 }
 
 # Fine contours for potential visualization
-# For some reason 2.5m contour fails if y is not downsampled...
-# This seems to be a bug related to NAs, but I haven't investigated...
-y1 = st_downsample(y,n=1,FUN=mean)
-co2.5 = st_contour(y1,breaks=get_alt_breaks(y,2.5),
+co2.5 = st_contour(y,breaks=get_alt_breaks(y,2.5),
                    na.rm=TRUE,contour_lines = TRUE)
 
 # Smoother major contours
