@@ -348,6 +348,19 @@ write_stars(hs,file.path(odir,"mnt.hillshade.tif"),
             options="COMPRESS=LZW",type="Byte")
 ```
 
+```{r}
+#| label: hillshading-intense
+#| eval: !expr "!file.exists(file.path(odir,'mnt.hillshade.intense.tif'))"
+ 
+y = readRDS(file.path(odir,"mnt.RDS"))
+
+hs = hillshader(as(y,"Raster"),shader="lamb_shade",zscale=0.2) |>
+  st_as_stars()
+hs[[1]] = round(hs[[1]]*255)
+write_stars(hs,file.path(odir,"mnt.hillshade.intense.tif"),
+            options="COMPRESS=LZW",type="Byte")
+```
+
 ## Analyze height data
 
 ```{r}
